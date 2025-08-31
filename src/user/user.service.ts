@@ -10,6 +10,8 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { HashingService } from 'src/iam/hashing.service';
 import { LoginUserDto } from './dto/login-user.dto';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserService {
@@ -17,8 +19,8 @@ export class UserService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private hashingService: HashingService,
-    // private jwtService: JwtService,
-    // private configService: ConfigService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
   async create(createUserDto: CreateUserDto) {
     try {
@@ -55,7 +57,31 @@ export class UserService {
       loginUser.password,
       getUser.password,
     );
+    if (!isPasswordTrue) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
     const payload = { email: getUser.email, sub: getUser.id };
-    console.log(payload);
+    const tokens = this.getTokens(payload);
+    return tokens;
+  }
+  getTokens(payload: { email: string; sub: number }) {
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const refreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET') || jwtSecret;
+
+    return {
+      accessToken: this.jwtService.sign(payload, {
+        secret: jwtSecret,
+      }),
+      refreshToken: this.jwtService.sign(payload, {
+        secret: refreshSecret,
+      }),
+    };
+  }
+  async getProfile(id: number) {
+    console.log('getProfile called with id:', id);
+    return this.userRepository.findOne({
+      where: { id },
+    });
   }
 }
