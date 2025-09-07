@@ -5,11 +5,16 @@ import {
   Request,
   Get,
   UseGuards,
+  Delete,
+  SetMetadata,
+  Param,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/iam/roles.decorator';
+import { Role } from 'src/iam/role.enum';
 
 @Controller('user')
 export class UserController {
@@ -36,5 +41,11 @@ export class UserController {
   ) {
     const userPayload = req.user;
     return this.userService.getProfile(userPayload.userId);
+  }
+  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('delete/:id')
+  remove(@Param('id') id: number) {
+    return this.userService.removeUser(id);
   }
 }

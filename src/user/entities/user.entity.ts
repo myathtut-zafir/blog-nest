@@ -1,3 +1,4 @@
+import { Role } from 'src/iam/role.enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
@@ -10,4 +11,6 @@ export class User {
   email: string;
   @Column({ type: 'varchar' })
   password: string;
+  @Column({ type: 'enum', enum: Role, default: Role.USER })
+  role: Role;
 }
