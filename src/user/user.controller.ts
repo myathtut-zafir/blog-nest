@@ -15,7 +15,10 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/iam/roles.decorator';
 import { Role } from 'src/iam/role.enum';
+import { RolesGuard } from 'src/iam/roles.guard';
+import { JwtPayload } from 'src/iam/jwt-payload.interface';
 
+@Roles(Role.USER)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -43,9 +46,16 @@ export class UserController {
     return this.userService.getProfile(userPayload.userId);
   }
   @Roles(Role.ADMIN)
+  @UseGuards(RolesGuard)
   @UseGuards(AuthGuard('jwt'))
   @Delete('delete/:id')
-  remove(@Param('id') id: number) {
+  remove(
+    @Param('id') id: number,
+    @Request()
+    req: {
+      user: JwtPayload;
+    },
+  ) {
     return this.userService.removeUser(id);
   }
 }
