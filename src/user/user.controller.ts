@@ -8,6 +8,7 @@ import {
   Delete,
   SetMetadata,
   Param,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
@@ -17,12 +18,15 @@ import { Roles } from 'src/iam/roles.decorator';
 import { Role } from 'src/iam/role.enum';
 import { RolesGuard } from 'src/iam/roles.guard';
 import { JwtPayload } from 'src/iam/jwt-payload.interface';
+import { LoggingInterceptor } from 'src/common/interceptors/logging/logging.interceptor';
+import { ResponseInterceptor } from 'src/common/interceptors/response/response.interceptor';
 
 @Roles(Role.USER)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseInterceptors(LoggingInterceptor, ResponseInterceptor)
   @Post('create')
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
